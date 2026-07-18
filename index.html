@@ -14,12 +14,20 @@
   .card:hover { transform: translateY(-4px); }
   .card img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
   .card .name { padding: 0.6rem 0.75rem; font-size: 0.82rem; color: #bbb; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-top: 1px solid #2a2a2a; }
+  .fav-btn { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; z-index: 1; }
+  .fav-btn:hover { transform: scale(1.15); }
+  .fav-btn.active { color: #ff4060; }
+  .card { position: relative; }
+  .toggle { display: block; margin: 0 auto 1.5rem; background: #222; color: #ccc; border: 1px solid #333; border-radius: 6px; padding: 0.5rem 1.2rem; font-size: 0.9rem; cursor: pointer; transition: background 0.2s; }
+  .toggle:hover { background: #333; }
+  .toggle.on { background: #ff4060; color: #fff; border-color: #ff4060; }
 </style>
 </head>
 <body>
 <h1>NY Artists Gallery</h1>
 <p class="count">657 artists</p>
-<div class="gallery">
+<button class="toggle" id="toggleFavs">Show Favorites</button>
+<div class="gallery" id="gallery">
   <div class="card"><img loading="lazy" src="images/@0321smith.png" alt="@0321smith"><div class="name">@0321smith</div></div>
   <div class="card"><img loading="lazy" src="images/@23_(real_xxiii).png" alt="@23_(real_xxiii)"><div class="name">@23_(real_xxiii)</div></div>
   <div class="card"><img loading="lazy" src="images/@32zzz.png" alt="@32zzz"><div class="name">@32zzz</div></div>
@@ -678,5 +686,45 @@
   <div class="card"><img loading="lazy" src="images/@zen.png" alt="@zen"><div class="name">@zen</div></div>
   <div class="card"><img loading="lazy" src="images/@zol.png" alt="@zol"><div class="name">@zol</div></div>
 </div>
+<script>
+(function() {
+  const STORAGE_KEY = 'ny-favorites';
+  const gallery = document.getElementById('gallery');
+  const cards = gallery.querySelectorAll('.card');
+  const toggle = document.getElementById('toggleFavs');
+  let favorites = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
+  let showingFavs = false;
+
+  cards.forEach(card => {
+    const src = card.querySelector('img').getAttribute('src');
+    const btn = document.createElement('button');
+    btn.className = 'fav-btn' + (favorites.has(src) ? ' active' : '');
+    btn.textContent = favorites.has(src) ? '\u2764' : '\u2661';
+    btn.onclick = function(e) {
+      e.stopPropagation();
+      if (favorites.has(src)) { favorites.delete(src); btn.classList.remove('active'); btn.textContent = '\u2661'; }
+      else { favorites.add(src); btn.classList.add('active'); btn.textContent = '\u2764'; }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([...favorites]));
+      if (showingFavs) applyFilter();
+    };
+    card.style.position = 'relative';
+    card.prepend(btn);
+  });
+
+  toggle.onclick = function() {
+    showingFavs = !showingFavs;
+    toggle.textContent = showingFavs ? 'Show All' : 'Show Favorites';
+    toggle.classList.toggle('on', showingFavs);
+    applyFilter();
+  };
+
+  function applyFilter() {
+    cards.forEach(card => {
+      const src = card.querySelector('img').getAttribute('src');
+      card.style.display = (!showingFavs || favorites.has(src)) ? '' : 'none';
+    });
+  }
+})();
+</script>
 </body>
 </html>
